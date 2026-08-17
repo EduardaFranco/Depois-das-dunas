@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Painel da mestre — Depois das Dunas</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<div class="pagina">
+  <div class="conteudo larga">
+
+    <div class="cartao" id="cartao-login">
+      <div class="logo-topo">
+        <h1 style="font-size:1.5rem;">Painel da mestre</h1>
+        <p>Digita a senha pra ver as fichas dos investigadores.</p>
+      </div>
+      <label for="campo-senha">Senha:</label>
+      <input type="password" id="campo-senha" placeholder="Sua senha de mestre" />
+      <div id="mensagem-login" class="mensagem" style="display:none;"></div>
+      <button id="botao-entrar" class="botao botao-primario espaco-topo">Entrar</button>
+      <a href="index.html" class="botao botao-fantasma centro">← Voltar</a>
+    </div>
+
+    <div class="cartao" id="cartao-painel" style="display:none;">
+      <div class="cabecalho-secao">
+        <span class="onda-emoji">🌊</span> Depois das dunas / Painel da mestre
+      </div>
+      <label style="margin-top:0;">Ficha de investigadores:</label>
+      <div class="grade-players" id="grade-players"></div>
+      <p class="ajuda-texto" id="texto-vazio" style="display:none;">Nenhum investigador criado ainda.</p>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/mestre-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+inserirOndas();
+
+const elMensagemLogin = document.getElementById("mensagem-login");
+
+function tentarLogin() {
+  const senha = document.getElementById("campo-senha").value;
+  if (senha === SENHA_MESTRE) {
+    sessionStorage.setItem("dunas_mestre_ok", "1");
+    mostrarPainel();
+  } else {
+    mostrarMensagem(elMensagemLogin, "Senha incorreta.");
+  }
+}
+document.getElementById("botao-entrar").addEventListener("click", tentarLogin);
+document.getElementById("campo-senha").addEventListener("keydown", (e) => { if (e.key === "Enter") tentarLogin(); });
+
+async function mostrarPainel() {
+  document.getElementById("cartao-login").style.display = "none";
+  document.getElementById("cartao-painel").style.display = "block";
+  try {
+    const investigadores = await listarInvestigadores();
+    const grade = document.getElementById("grade-players");
+    grade.innerHTML = "";
+    if (investigadores.length === 0) {
+      document.getElementById("texto-vazio").style.display = "block";
+      return;
+    }
+    investigadores.forEach(inv => {
+      const botao = document.createElement("button");
+      botao.className = "cartao-player";
+      botao.innerHTML = `${inv.nome || "(sem nome)"}<span class="sub">${inv.codigo}</span>`;
+      botao.addEventListener("click", () => {
+        window.location.href = `ficha.html?codigo=${encodeURIComponent(inv.codigo)}&mestre=1`;
+      });
+      grade.appendChild(botao);
+    });
+  } catch (e) {
+    document.getElementById("grade-players").innerHTML =
+      '<p class="ajuda-texto">Erro ao carregar investigadores do banco de dados.</p>';
+    console.error(e);
+  }
+}
+
+// se já logou nessa aba antes, pula direto pro painel
+if (sessionStorage.getItem("dunas_mestre_ok") === "1") {
+  mostrarPainel();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Acessar investigador — Depois das Dunas</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<div class="pagina">
+  <div class="conteudo">
+    <div class="cartao">
+      <div class="cabecalho-secao">
+        <span class="onda-emoji">🌊</span> Depois das dunas / Acessando investigador
+      </div>
+
+      <p class="centro" style="font-size:1.15rem; font-weight:700; color:var(--azul-noite); margin-bottom: 26px;">
+        Olá! Seja bem<br>vindo de volta
+      </p>
+
+      <label for="campo-codigo">Código de acesso:</label>
+      <input type="text" id="campo-codigo" placeholder="DUNAS-XXXXX" autocomplete="off" />
+
+      <p class="ajuda-texto">Esqueceu teu código?<br><a href="mestre.html">Fale com a mestre!</a></p>
+
+      <div id="mensagem" class="mensagem" style="display:none;"></div>
+
+      <button id="botao-acessar" class="botao botao-primario espaco-topo">Acessar</button>
+      <a href="index.html" class="botao botao-fantasma centro espaco-topo">← Voltar</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+inserirOndas();
+
+const campoCodigo = document.getElementById("campo-codigo");
+const botaoAcessar = document.getElementById("botao-acessar");
+const mensagem = document.getElementById("mensagem");
+
+async function tentarAcessar() {
+  const codigo = campoCodigo.value.trim();
+  if (!codigo) {
+    mostrarMensagem(mensagem, "Digita teu código de acesso primeiro :)", "erro");
+    return;
+  }
+  botaoAcessar.disabled = true;
+  botaoAcessar.textContent = "Procurando...";
+  try {
+    const investigador = await buscarInvestigadorPorCodigo(codigo);
+    if (!investigador) {
+      mostrarMensagem(mensagem, "Não achei nenhum investigador com esse código. Confere se digitou certo!", "erro");
+      return;
+    }
+    salvarCodigoLocal(investigador.codigo);
+    window.location.href = `ficha.html?codigo=${encodeURIComponent(investigador.codigo)}`;
+  } catch (e) {
+    mostrarMensagem(mensagem, "Deu ruim pra conectar com o banco de dados. Tenta de novo em instantes.", "erro");
+    console.error(e);
+  } finally {
+    botaoAcessar.disabled = false;
+    botaoAcessar.textContent = "Acessar";
+  }
+}
+
+botaoAcessar.addEventListener("click", tentarAcessar);
+campoCodigo.addEventListener("keydown", (e) => { if (e.key === "Enter") tentarAcessar(); });
+</script>
+</body>
+</html>
